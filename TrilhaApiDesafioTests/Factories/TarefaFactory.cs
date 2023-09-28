@@ -24,11 +24,13 @@ namespace TrilhaApiDesafioTests.Factories
                     Titulo = $"Testes - {i}",
                     Descricao = "Testes de integração",
                     Data = DateTime.Now.AddDays(i),
-                    Status = EnumStatusTarefa.Pendente
+                    Status = IsEven(i) ? EnumStatusTarefa.Pendente : EnumStatusTarefa.Finalizado
                 });
             }
 
             return tarefas;
         }
+
+        public static bool IsEven(int n) => n % 2 == 0;
     }
 }
