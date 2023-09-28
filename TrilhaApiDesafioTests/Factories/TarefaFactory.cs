@@ -21,7 +21,7 @@ namespace TrilhaApiDesafioTests.Factories
             {
                 tarefas.Add(new Tarefa
                 {
-                    Titulo = "Testes",
+                    Titulo = $"Testes - {i}",
                     Descricao = "Testes de integração",
                     Data = DateTime.Now,
                     Status = EnumStatusTarefa.Pendente
