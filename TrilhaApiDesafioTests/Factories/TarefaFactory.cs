@@ -23,7 +23,7 @@ namespace TrilhaApiDesafioTests.Factories
                 {
                     Titulo = $"Testes - {i}",
                     Descricao = "Testes de integração",
-                    Data = DateTime.Now,
+                    Data = DateTime.Now.AddDays(i),
                     Status = EnumStatusTarefa.Pendente
                 });
             }
