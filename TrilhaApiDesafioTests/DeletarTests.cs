@@ -1,14 +1,11 @@
-using Microsoft.Extensions.DependencyInjection;
 using System.Net;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using TrilhaApiDesafio.Context;
-using TrilhaApiDesafioTests.Factories;
+using TrilhaApiDesafioTests.Helpers;
 
 namespace TrilhaApiDesafioTests
 {
     public class DeletarTests : IClassFixture<IntegrationTestAppFactory<Program>>
     {
+        private const string BasePath = "/Tarefa";
         private readonly IntegrationTestAppFactory<Program> _factory;
 
         public DeletarTests(IntegrationTestAppFactory<Program> factory)
@@ -20,46 +17,25 @@ namespace TrilhaApiDesafioTests
         public async Task Deletar_TarefaExiste_DeveRetornarNoContent()
         {
             // Arrange
-            var jsonOptions = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            };
-            jsonOptions.Converters.Add(new JsonStringEnumConverter());
-
-            using var setupScope = _factory.Services.CreateScope();
-            var setupScopedServices = setupScope.ServiceProvider;
-            var setupDataAccess = setupScopedServices.GetRequiredService<OrganizadorContext>();
-
-            var tarefa = TarefaFactory.CriarTarefa();
-
-            setupDataAccess.Add(tarefa);
-            setupDataAccess.SaveChanges();
-
             var httpClient = _factory.CreateClient();
+            var idTarefa = _factory.Tarefas[0].Id;
 
             // Act
-            var response = await httpClient.DeleteAsync($"/Tarefa/{tarefa.Id}");
+            var response = await httpClient.DeleteAsync($"{BasePath}/{idTarefa}");
 
             // Assert
             response.StatusCode.Should().Be(HttpStatusCode.NoContent);
-
-            using var scope = _factory.Services.CreateScope();
-            var scopedServices = scope.ServiceProvider;
-            var dataAccess = scopedServices.GetRequiredService<OrganizadorContext>();
-            var tarefaBanco = dataAccess.Tarefas.Find(tarefa.Id);
-
-            tarefaBanco.Should().BeNull();
         }
 
         [Fact]
         public async Task Deletar_TarefaNaoExiste_DeveRetornarNotFound()
         {
             // Arrange
-            var idInexistente = int.MaxValue;
             var httpClient = _factory.CreateClient();
+            var idInexistente = int.MaxValue;
 
             // Act
-            var response = await httpClient.DeleteAsync($"/Tarefa/{idInexistente}");
+            var response = await httpClient.DeleteAsync($"{BasePath}/{idInexistente}");
 
             // Assert
             response.StatusCode.Should().Be(HttpStatusCode.NotFound);

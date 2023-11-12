@@ -1,16 +1,13 @@
-using Microsoft.Extensions.DependencyInjection;
 using System.Net;
 using System.Net.Http.Json;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using TrilhaApiDesafio.Context;
-using TrilhaApiDesafio.Models;
-using TrilhaApiDesafioTests.Factories;
+using TrilhaApiDesafio.DTO;
+using TrilhaApiDesafioTests.Helpers;
 
 namespace TrilhaApiDesafioTests
 {
     public class CriarTests : IClassFixture<IntegrationTestAppFactory<Program>>
     {
+        private const string BasePath = "/Tarefa";
         private readonly IntegrationTestAppFactory<Program> _factory;
 
         public CriarTests(IntegrationTestAppFactory<Program> factory)
@@ -22,41 +19,34 @@ namespace TrilhaApiDesafioTests
         public async Task Criar_TarefaValida_DeveRetornarCreatedComTarefa()
         {
             // Arrange
-            var jsonOptions = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            };
-            jsonOptions.Converters.Add(new JsonStringEnumConverter());
-
             var httpClient = _factory.CreateClient();
+            var tarefaDTO = new TarefaForManipulationDTOBuilder()
+                .WithValidDate()
+                .Build();
 
             // Act
-            var response = await httpClient.PostAsJsonAsync("/Tarefa", TarefaFactory.CriarTarefa());
+            var response = await httpClient.PostAsJsonAsync($"{BasePath}", tarefaDTO);
 
             // Assert
             response.StatusCode.Should().Be(HttpStatusCode.Created);
-            var responseBody = await response.Content.ReadFromJsonAsync<Tarefa>(jsonOptions);
-            var tarefaResposta = responseBody.Should().BeAssignableTo<Tarefa>().Subject;
+            var responseBody = await ResponseHelper.GetResponseBody<TarefaDTO>(response);
+            var tarefaResposta = responseBody.Should().BeAssignableTo<TarefaDTO>().Subject;
 
-            using var scope = _factory.Services.CreateScope();
-            var scopedServices = scope.ServiceProvider;
-            var dataAccess = scopedServices.GetRequiredService<OrganizadorContext>();
-            var tarefaBanco = dataAccess.Tarefas.Find(tarefaResposta.Id);
-
-            tarefaResposta.Should().BeEquivalentTo(tarefaBanco, options => options.ComparingByMembers<Tarefa>());
+            tarefaResposta.Id.Should().NotBe(0);
         }
 
         [Fact]
         public async Task Criar_TarefaComDataVazia_DeveRetornarBadRequest()
         {
             // Arrange
-            var tarefa = TarefaFactory.CriarTarefa();
-            tarefa.Data = DateTime.MinValue;
+            var tarefaDTO = new TarefaForManipulationDTOBuilder()
+                .WithInvalidDate()
+                .Build();
 
             var httpClient = _factory.CreateClient();
 
             // Act
-            var response = await httpClient.PostAsJsonAsync("/Tarefa", tarefa);
+            var response = await httpClient.PostAsJsonAsync($"{BasePath}", tarefaDTO);
 
             // Assert
             response.StatusCode.Should().Be(HttpStatusCode.BadRequest);

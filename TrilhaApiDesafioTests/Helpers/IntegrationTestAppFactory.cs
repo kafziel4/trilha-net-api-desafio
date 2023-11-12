@@ -6,8 +6,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Testcontainers.MsSql;
 using TrilhaApiDesafio.Context;
+using TrilhaApiDesafio.Models;
 
-namespace TrilhaApiDesafioTests.Factories
+namespace TrilhaApiDesafioTests.Helpers
 {
     public class IntegrationTestAppFactory<TStartup>
         : WebApplicationFactory<TStartup>, IAsyncLifetime where TStartup : class
@@ -15,6 +16,8 @@ namespace TrilhaApiDesafioTests.Factories
         private readonly MsSqlContainer _msSqlcontainer = new MsSqlBuilder()
             .WithImage("mcr.microsoft.com/mssql/server:2019-CU18-ubuntu-20.04")
             .Build();
+
+        public List<Tarefa> Tarefas { get; private set; } = new();
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
@@ -30,7 +33,9 @@ namespace TrilhaApiDesafioTests.Factories
                 using var scope = serviceProvider.CreateScope();
                 var scopedServices = scope.ServiceProvider;
                 var context = scopedServices.GetRequiredService<OrganizadorContext>();
+
                 context.Database.EnsureCreated();
+                Tarefas = DatabaseHelper.Seed(context);
             });
         }
 
